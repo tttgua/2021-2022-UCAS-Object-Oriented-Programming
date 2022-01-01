@@ -7,7 +7,7 @@ import javax.swing.ImageIcon;
 /**
  * ±³¾°Ä£ÐÍ
  */
-public class BackgroundModel extends Tick implements Port
+public class BackgroundModel extends Tick implements Observer
 {
     /**
      * ±³¾°Í¼Ïñ

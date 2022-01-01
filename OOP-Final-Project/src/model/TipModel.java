@@ -5,7 +5,7 @@ import control.Controller;
 /**
  * 文字提示模型
  */
-public class TipModel extends Tick implements Port
+public class TipModel extends Tick implements Observer
 {
 
     private PlayerModel player = null;
@@ -30,7 +30,7 @@ public class TipModel extends Tick implements Port
     /**
      * 显示文字提示
      */
-    public void showTextTip(PlayerModel player, String str, int time)
+    public void showTip(PlayerModel player, String str, int time)
     {
         this.player = player;
         this.setTipString(str);

@@ -9,7 +9,7 @@ import control.RunController;
 /**
  * ÷»×ÓÄ£ÐÍ
  */
-public class DiceModel extends Tick implements Port
+public class DiceModel extends Tick implements Observer
 {
 
     /**

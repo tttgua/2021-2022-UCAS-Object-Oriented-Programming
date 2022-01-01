@@ -268,16 +268,13 @@ public class FrameConfig extends JFrame
 
         jp.add(leftButton1);
         rightButton1 = this.createButton(128 + x, 92 + y, ConfigPicture.BUTTON_RIGHT, 'd');
-        rightButton1.addActionListener(new ActionListener()
+        rightButton1.addActionListener(arg0 ->
         {
-            public void actionPerformed(ActionEvent arg0)
+            if (optional[0] >= img.length - 1)
             {
-                if (optional[0] >= img.length - 1)
-                {
-                    optional[0] = -1;
-                }
-                jlPlayer1Choose.setIcon(img[++optional[0]]);
+                optional[0] = -1;
             }
+            jlPlayer1Choose.setIcon(img[++optional[0]]);
         });
         jp.add(rightButton1);
         JBPlayer1.setBounds(12 + x, 128 + y, 120, 30);

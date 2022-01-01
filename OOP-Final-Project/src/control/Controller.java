@@ -14,7 +14,7 @@ import model.DiceModel;
 import model.EventModel;
 import model.LandModel;
 import model.PlayerModel;
-import model.Port;
+import model.Observer;
 import model.TipModel;
 import model.building.*;
 import model.card.Card;
@@ -39,13 +39,13 @@ public class Controller
     /**
      * 游戏主面板
      */
-    private MyJPanel panel;
+    private MyJPanel mainPanel;
     /**
      * 游戏对象
      */
     private RunController run;
 
-    private List<Port> models = new ArrayList<>();
+    private List<Observer> models = new ArrayList<>();
     private List<PlayerModel> players = null;
     private BuildingModel building = null;
     private BackgroundModel background = null;
@@ -62,9 +62,9 @@ public class Controller
         this.run.setPlayers(players);
     }
 
-    public void setPanel(MyJPanel panel)
+    public void setMainPanel(MyJPanel mainPanel)
     {
-        this.panel = panel;
+        this.mainPanel = mainPanel;
     }
 
     /**
@@ -102,17 +102,16 @@ public class Controller
         Timer gameTimer = new Timer();
         gameTimer.schedule(new TimerTask()
         {
-            @Override
             public void run()
             {
                 tick++;
-                // 更新各对象
-                for (Port temp : models)
+                // 通知各对象更新
+                for (Observer temp : models)
                 {
                     temp.update(tick);
                 }
-                // UI更新
-                panel.repaint();
+                // 更新视图
+                mainPanel.repaint();
             }
         }, 0, (1000 / rate));
     }
@@ -124,13 +123,13 @@ public class Controller
     {
         // 创建一个计时器
         this.createGameTimer();
-        for (Port temp : this.models)
+        for (Observer temp : this.models)
         {
             temp.initGame();
         }
         this.run.startGame();
         // panel 初始化
-        this.panel.initGamePanel();
+        this.mainPanel.initGamePanel();
     }
 
 
@@ -179,31 +178,29 @@ public class Controller
      */
     public void pressDiceButton()
     {
-        PlayerModel p = this.run.getCurPlayer();
-        if (p.getHospitalRemain() > 0 || p.getPrisonRemain() > 0)
+        PlayerModel p = this.run.getCurPlayer();  // 获取当前玩家
+        if (p.getHospitalRemain() > 0 || p.getPrisonRemain() > 0) // 住院中或坐牢中
         {
             this.run.nextState();
             if (p.getHospitalRemain() > 0)
             {
-                this.tip.showTextTip(p, p.getName() + "住院中\r\n剩余"
-                        + p.getHospitalRemain() + "天.", 3);
+                this.tip.showTip(p, p.getName() + "住院中\r\n剩余" + p.getHospitalRemain() + "天.", 3);
+                p.setHospitalRemain(p.getHospitalRemain() - 1);
             } else if (p.getPrisonRemain() > 0)
             {
-                this.tip.showTextTip(p, p.getName() + "坐牢中\r\n剩余"
-                        + p.getPrisonRemain() + "天.", 3);
+                this.tip.showTip(p, p.getName() + "坐牢中\r\n剩余" + p.getPrisonRemain() + "天.", 3);
+                p.setPrisonRemain(p.getPrisonRemain() - 1);
             }
-            this.run.nextState();
+            this.run.nextState();                 // 直接跳过玩家移动状态
         } else
         {
             this.dice.setStartTick(Controller.tick);
-            this.dice.setNextTick(this.dice.getStartTick() + this.dice.getLastTick());
-            // 将运行对象点数传入骰子模型对象
-            this.dice.setPoint(this.run.getPoint());
+            this.dice.setNextTick(this.dice.getStartTick() + this.dice.getLastTick()); // 设置骰子转动时间
+            this.dice.setPoint(this.run.getPoint()); // 将点数传入骰子模型对象
             this.run.nextState();
-            // 骰子转动完毕后玩家移动
-            this.run.getCurPlayer().setStartTick(this.dice.getNextTick() + 10);
+            this.run.getCurPlayer().setStartTick(this.dice.getNextTick() + 10); // 设置玩家开始移动的时刻
             this.run.getCurPlayer().setNextTick(this.run.getCurPlayer().getStartTick()
-                            + this.run.getCurPlayer().getLastTick() * (this.run.getPoint() + 1));
+                            + this.run.getCurPlayer().getLastTick() * (this.run.getPoint() + 1)); //设置玩家移动时间
         }
     }
 
@@ -274,7 +271,6 @@ public class Controller
         switch (event)
         {
             case GameConstant.ORIGIN_PASS_EVENT:
-                // 中途经过原点
                 passOrigin(b, player);
                 break;
             default:
@@ -287,7 +283,7 @@ public class Controller
      */
     private void passOrigin(Building b, PlayerModel player)
     {
-        this.tip.showTextTip(player, player.getName() + " 路过原点，奖励 "
+        this.tip.showTip(player, player.getName() + " 路过原点，奖励 "
                 + ((Origin) b).getPassReward() + "金币.", 3);
         player.setCash(player.getCash() + ((Origin) b).getPassReward());
     }
@@ -302,13 +298,13 @@ public class Controller
         PlayerModel player = this.run.getCurPlayer();
         if (player.getHospitalRemain() > 0)
         {
-            this.tip.showTextTip(player, player.getName() + "当前在医院,不能移动.",
+            this.tip.showTip(player, player.getName() + "当前在医院,不能移动.",
                     2);
             // 更换玩家状态
             this.run.nextState();
         } else if (player.getPrisonRemain() > 0)
         {
-            this.tip.showTextTip(player, player.getName() + "当前在监狱,不能移动.",
+            this.tip.showTip(player, player.getName() + "当前在监狱,不能移动.",
                     2);
             // 更换玩家状态
             this.run.nextState();
@@ -326,7 +322,7 @@ public class Controller
     {
         // 当前玩家
         PlayerModel player = this.run.getCurPlayer();
-        // 该地点房屋
+        // 当前位置建筑
         Building building = this.building.getBuilding(player.getY() / 60, player.getX() / 60);
         if (building != null)
         {
@@ -343,20 +339,20 @@ public class Controller
         switch (event)
         {
             case GameConstant.HOUSE_EVENT:
-                // 停留在可操作土地
+                // 停留在房屋
                 stopInBuilding(b, player);
                 break;
             case GameConstant.NEWS_EVENT:
-                // 停留在新闻点上
+                // 停留在随机事件
                 stopInNews(b, player);
                 break;
             case GameConstant.ORIGIN_EVENT:
-                // 停留在原点
+                // 停留在起点
                 stopInOrigin(b, player);
                 break;
             case GameConstant.TICKET_EVENT:
-                // 停留在点券位
-                stopInPoint(b, player);
+                // 停留在点券
+                stopInTicket(b, player);
                 break;
             case GameConstant.SHOP_EVENT:
                 // 停留在商店
@@ -376,8 +372,8 @@ public class Controller
             // 为商店的货架从新生成商品
             ((Shop) b).createCards();
             // 为商店面板更新新的卡片商品
-            this.panel.getShop().addCards((Shop) b);
-            this.panel.getShop().moveToFront();
+            this.mainPanel.getShop().addCards((Shop) b);
+            this.mainPanel.getShop().moveToFront();
         } else
         {
             this.run.nextState();
@@ -387,10 +383,10 @@ public class Controller
     /**
      * 停留在点卷位
      */
-    private void stopInPoint(Building b, PlayerModel player)
+    private void stopInTicket(Building b, PlayerModel player)
     {
         player.setTicket(((Ticket) b).getTicketPoint() + player.getTicket());
-        this.tip.showTextTip(player, player.getName() + " \r\n获得 "
+        this.tip.showTip(player, player.getName() + " \r\n获得 "
                 + ((Ticket) b).getTicketPoint() + "点券.", 3);
         new Thread(new MyThread(run, 1)).start();
     }
@@ -401,7 +397,7 @@ public class Controller
      */
     private void stopInOrigin(Building b, PlayerModel player)
     {
-        this.tip.showTextTip(player, player.getName() + " 在起点停留，\r\n奖励 "
+        this.tip.showTip(player, player.getName() + " 在起点停留，\r\n奖励 "
                 + ((Origin) b).getReward() + "金币.", 3);
         player.setCash(player.getCash() + ((Origin) b).getReward());
         new Thread(new MyThread(run, 1)).start();
@@ -493,12 +489,12 @@ public class Controller
         if (b.getOwner().getHospitalRemain() > 0)
         {
             // 增加文本提示
-            this.tip.showTextTip(player, b.getOwner().getName()
+            this.tip.showTip(player, b.getOwner().getName()
                     + "正在住院,免交过路费.", 3);
         } else if (b.getOwner().getPrisonRemain() > 0)
         {
             // 增加文本提示
-            this.tip.showTextTip(player, b.getOwner().getName()
+            this.tip.showTip(player, b.getOwner().getName()
                     + "正在监狱,免交过路费.", 3);
         } else
         {
@@ -508,7 +504,7 @@ public class Controller
             // 业主得到金币
             b.getOwner().setCash(b.getOwner().getCash() + revenue);
             // 增加文本提示
-            this.tip.showTextTip(player, player.getName() + "到达"
+            this.tip.showTip(player, player.getName() + "到达"
                     + b.getOwner().getName() + "的房屋，\r\n过路费:" + revenue + "金币.", 3);
 
         }
@@ -536,11 +532,11 @@ public class Controller
                 b.setLevel(1);
                 player.getBuildings().add(b);
                 player.setCash(player.getCash() - price);
-                this.tip.showTextTip(player, player.getName()
+                this.tip.showTip(player, player.getName()
                         + " 买下了一块空地，\r\n花费了: " + price + "金币. ", 3);
             } else
             {
-                this.tip.showTextTip(player, player.getName()
+                this.tip.showTip(player, player.getName()
                         + " 金币不足,操作失败. ", 3);
             }
         }
@@ -567,13 +563,13 @@ public class Controller
                 {
                     b.setLevel(b.getLevel() + 1);
                     player.setCash(player.getCash() - price);
-                    this.tip.showTextTip(player, player.getName() + " 从 "
+                    this.tip.showTip(player, player.getName() + " 从 "
                             + name + " 升级成 " + upName + "，\r\n花费了 " + price
                             + "金币. ", 3);
                 } else
                 {
                     // 增加文本提示
-                    this.tip.showTextTip(player, player.getName()
+                    this.tip.showTip(player, player.getName()
                             + " 金币不足,操作失败. ", 3);
                 }
             }
@@ -585,7 +581,7 @@ public class Controller
     /**
      * 使用卡片
      */
-    public void useCards()
+    public void useCard()
     {
         PlayerModel p = this.run.getCurPlayer();
         while (true)
@@ -671,7 +667,7 @@ public class Controller
                 cPlayer.setY(LandModel.prison.y);
             }
             // 增加文本提示
-            this.tip.showTextTip(card.getOwner(), card.getOwner().getName()
+            this.tip.showTip(card.getOwner(), card.getOwner().getName()
                     + " 使用了 \"陷害卡\"，将 \""
                     + card.getOwner().getOtherPlayer().getName()
                     + "\"入狱3天.", 3);
@@ -699,7 +695,7 @@ public class Controller
                     .getOtherPlayer()
                     .setCash(card.getOwner().getOtherPlayer().getCash() - money);
             // 增加文本提示
-            this.tip.showTextTip(card.getOwner(), card.getOwner().getName()
+            this.tip.showTip(card.getOwner(), card.getOwner().getName()
                     + " 使用了 \"查税卡\"，从 \""
                     + card.getOwner().getOtherPlayer().getName()
                     + "\"手中获得 10%税款", 2);
@@ -736,7 +732,7 @@ public class Controller
                             card.getOwner().getCash() - building.getAllPrice());
                     building.setOwner(card.getOwner());
                     // 增加文本提示
-                    this.tip.showTextTip(card.getOwner(), card.getOwner()
+                    this.tip.showTip(card.getOwner(), card.getOwner()
                             .getName() + " 使用了 \"购地卡\"，收购获得了该土地. ", 2);
                     // 　减去卡片
                     card.getOwner().getCards().remove(card);
@@ -775,7 +771,7 @@ public class Controller
             // 使用
             this.run.setPoint(response);
             // 增加文本提示
-            this.tip.showTextTip(card.getOwner(), card.getOwner().getName()
+            this.tip.showTip(card.getOwner(), card.getOwner().getName()
                     + " 使用了 \"遥控骰子卡\".", 2);
             // 减去卡片
             card.getOwner().getCards().remove(card);
@@ -795,14 +791,14 @@ public class Controller
      */
     public void buyCard(Shop shop)
     {
-        int chooseCard = this.panel.getShop().getChooseCard();
-        if (chooseCard >= 0 && this.panel.getShop().getCard().get(chooseCard) != null)
+        int chooseCard = this.mainPanel.getShop().getChooseCard();
+        if (chooseCard >= 0 && this.mainPanel.getShop().getCard().get(chooseCard) != null)
         {
             // 购买卡片 如果购买成功
             if (this.buyCard(shop, chooseCard))
             {
-                this.panel.getShop().getCard().get(chooseCard).setEnabled(false);
-                this.panel.getShop().setChooseCard(-1);
+                this.mainPanel.getShop().getCard().get(chooseCard).setEnabled(false);
+                this.mainPanel.getShop().setChooseCard(-1);
             }
         }
     }
@@ -812,7 +808,7 @@ public class Controller
      */
     public boolean buyCard(Shop shop, int p)
     {
-        if (this.panel.getShop().getCard().get(p) != null)
+        if (this.mainPanel.getShop().getCard().get(p) != null)
         {
             if (this.run.getCurPlayer().getCards().size() >= PlayerModel.MAX_CAN_HOLD_CARDS)
             {
@@ -848,7 +844,7 @@ public class Controller
         {
             Building tmp = p.getBuildings().get(i);
             p.setCash(p.getCash() + tmp.getAllPrice());
-            this.tip.showTextTip(p, p.getName()
+            this.tip.showTip(p, p.getName()
                     + ":\r\n时运不济，变卖一处地产\r\n获得" + tmp.getAllPrice() + "金币. ", 2);
             try
             {
@@ -872,6 +868,6 @@ public class Controller
     public void gameOver()
     {
         this.run.setCurState(RunController.GAME_STOP);
-        this.panel.getEndPlayerInfo().moveToFront();
+        this.mainPanel.getEndPlayerInfo().moveToFront();
     }
 }

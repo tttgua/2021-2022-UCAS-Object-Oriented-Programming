@@ -84,8 +84,8 @@ public class RunController
      */
     public void nextState()
     {
-        // 首先判断游戏是否得出结果
-        if (gameContinue())
+        // 首先判断游戏是否需要继续
+        if (isGameContinue())
         {
             if (this.curState == STATE_CARD)
             {
@@ -98,7 +98,7 @@ public class RunController
                 this.curState = STATE_CARD;
                 this.nextPlayer();
                 this.setPoint((int) (Math.random() * 6));
-                this.controller.useCards();
+                this.controller.useCard();
             }
         }
     }
@@ -118,16 +118,6 @@ public class RunController
      */
     private void nextPlayer()
     {
-        // 若住院或在监狱则减少一天
-        if (this.curPlayer.getPrisonRemain() > 0)
-        {
-            this.curPlayer.setPrisonRemain(this.curPlayer.getPrisonRemain() - 1);
-        }
-        if (this.curPlayer.getHospitalRemain() > 0)
-        {
-            this.curPlayer.setHospitalRemain(this.curPlayer.getHospitalRemain() - 1);
-        }
-
         if (this.curPlayer.equals(this.players.get(0)))
         {
             this.curPlayer = this.players.get(1);
@@ -142,7 +132,7 @@ public class RunController
     /**
      * 判断游戏是否继续
      */
-    public boolean gameContinue()
+    public boolean isGameContinue()
     {
         PlayerModel p1 = this.curPlayer;
         PlayerModel p2 = this.curPlayer.getOtherPlayer();
@@ -213,7 +203,7 @@ public class RunController
         // 随机设定点数
         this.setPoint((int) (Math.random() * 6));
         // 首个玩家使用卡片
-        this.controller.useCards();
+        this.controller.useCard();
     }
 
 }

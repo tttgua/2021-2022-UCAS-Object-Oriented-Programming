@@ -8,7 +8,7 @@ import javax.swing.ImageIcon;
 /**
  * 土地模型
  */
-public class LandModel extends Tick implements Port
+public class LandModel extends Tick implements Observer
 {
     /**
      * 土地格子图

@@ -15,7 +15,7 @@ import model.building.Shop;
 /**
  * 全局建筑模型
  */
-public class BuildingModel extends Tick implements Port
+public class BuildingModel extends Tick implements Observer
 {
     /**
      * 建筑链表

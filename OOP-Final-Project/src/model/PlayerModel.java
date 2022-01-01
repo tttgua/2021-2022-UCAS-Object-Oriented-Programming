@@ -14,7 +14,7 @@ import control.Controller;
 /**
  * 玩家模型
  */
-public class PlayerModel extends Tick implements Port
+public class PlayerModel extends Tick implements Observer
 {
     /**
      * 姓名

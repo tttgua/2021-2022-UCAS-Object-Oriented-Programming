@@ -1,6 +1,6 @@
 # 设计实现代码仓库
 
-可运行的jar文件位于[该路径](/classes/artifacts/UCAS_Richman_jar)，运行时需将images目录拷贝至运行目录
+可运行的jar文件位于[该路径](/classes/artifacts/UCAS_Richman_jar)（./classes/artifacts/UCAS_Richman_jar），运行时需将images目录拷贝至运行目录
 
 ## 游戏规则
 

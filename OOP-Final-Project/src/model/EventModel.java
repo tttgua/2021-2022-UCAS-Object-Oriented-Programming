@@ -9,7 +9,7 @@ import control.Controller;
 /**
  * 事件模型
  */
-public class EventModel extends Tick implements Port
+public class EventModel extends Tick implements Observer
 {
     /**
      * 显示图片
